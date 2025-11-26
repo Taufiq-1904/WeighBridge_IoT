@@ -1,21 +1,67 @@
-const ws = new WebSocket("ws://localhost:3001");
+let ws = null;
+let reconnectInterval = 2000;
 
-ws.onmessage = ev => {
-  const data = JSON.parse(ev.data);
+// Coba koneksi WebSocket dengan auto-reconnect
+function connectWS() {
+  ws = new WebSocket("ws://localhost:3001");
 
-  if (data.status !== null) {
-    document.getElementById("status").textContent = data.status;
-  }
+  ws.onopen = () => {
+    console.log("WS: connected");
+  };
 
-  if (data.weight !== null) {
-    document.getElementById("weight").textContent = data.weight;
-  }
-};
+  ws.onclose = () => {
+    console.log("WS: disconnected, retrying...");
+    setTimeout(connectWS, reconnectInterval);
+  };
 
-function open1() {
-  ws.send("OPEN1");
+  ws.onerror = () => {
+    console.log("WS error");
+    ws.close();
+  };
+
+  ws.onmessage = (ev) => {
+    let data;
+
+    try {
+      data = JSON.parse(ev.data);
+    } catch (e) {
+      console.error("Invalid JSON:", ev.data);
+      return;
+    }
+
+    updateUI(data);
+  };
 }
 
-function close1() {
-  ws.send("CLOSE1");
+connectWS();
+
+// ==============================
+// UPDATE UI TANPA ERROR
+// ==============================
+function updateUI(data) {
+  safeSet("status", data.status);
+  safeSet("weight", data.weight);
 }
+
+// tidak error meski elemen tidak ada
+function safeSet(id, value) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = value ?? "-";
+}
+
+// ==============================
+// COMMAND
+// ==============================
+function sendCmd(cmd) {
+  if (!ws || ws.readyState !== WebSocket.OPEN) {
+    console.log("WS not ready, command skipped:", cmd);
+    return;
+  }
+  ws.send(cmd);
+}
+
+function open1() { sendCmd("OPEN1"); }
+function close1() { sendCmd("CLOSE1"); }
+function open2() { sendCmd("OPEN2"); }
+function close2() { sendCmd("CLOSE2"); }
