@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - IoT Jembatan Timbang</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">IoT Bridge</h1>
+      <p class="sidebar-subtitle">Weighing System</p>
+    </div>
+
+    <nav class="nav">
+      <ul class="nav-menu">
+        <li>
+          <a href="/" class="nav-link <%= page === 'dashboard' ? 'active' : '' %>">
+            <span class="nav-icon">📊</span> Dashboard
+          </a>
+        </li>
+        <li>
+          <a href="/control" class="nav-link <%= page === 'control' ? 'active' : '' %>">
+            <span class="nav-icon">🎛️</span> Control Panel
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content page-content">
+    
+    <!-- HEADER -->
+    <header class="page-header">
+      <h2 class="page-title">Dashboard</h2>
+      <div class="header-actions">
+        <span class="status-badge status-active">System Online</span>
+      </div>
+    </header>
+
+    <!-- GATE CONTROL STATUS -->
+    <section class="grid grid-2 status-grid">
+      <div class="card status-group">
+        <h3 class="group-title">🚧 Gate Control</h3>
+        <div class="status-items">
+          <!-- Gate Masuk -->
+          <div class="status-mini-card" data-component="gate-in">
+            <div class="mini-icon">➡️</div>
+            <div class="mini-content">
+              <h4 class="mini-title">Gate Masuk</h4>
+              <div id="gate-in-status" class="status-value">Closed</div>
+            </div>
+            <div class="status-indicator mini" data-status="closed"></div>
+          </div>
+
+          <!-- Gate Keluar -->
+          <div class="status-mini-card" data-component="gate-out">
+            <div class="mini-icon">⬅️</div>
+            <div class="mini-content">
+              <h4 class="mini-title">Gate Keluar</h4>
+              <div id="gate-out-status" class="status-value">Closed</div>
+            </div>
+            <div class="status-indicator mini" data-status="closed"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LED STATUS -->
+      <div class="card status-group">
+        <h3 class="group-title">💡 LED Status</h3>
+        <div class="status-items">
+          <!-- LED Merah -->
+          <div class="status-mini-card" data-component="led-red">
+            <div class="mini-icon" style="color: #e74c3c;">🔴</div>
+            <div class="mini-content">
+              <h4 class="mini-title">Merah</h4>
+              <div id="led-red-status" class="status-value">Off</div>
+            </div>
+            <div class="status-indicator mini" data-status="off"></div>
+          </div>
+
+          <!-- LED Kuning -->
+          <div class="status-mini-card" data-component="led-yellow">
+            <div class="mini-icon" style="color: #f39c12;">🟡</div>
+            <div class="mini-content">
+              <h4 class="mini-title">Kuning</h4>
+              <div id="led-yellow-status" class="status-value">Off</div>
+            </div>
+            <div class="status-indicator mini" data-status="off"></div>
+          </div>
+
+          <!-- LED Hijau -->
+          <div class="status-mini-card" data-component="led-green">
+            <div class="mini-icon" style="color: #2ecc71;">🟢</div>
+            <div class="mini-content">
+              <h4 class="mini-title">Hijau</h4>
+              <div id="led-green-status" class="status-value">Off</div>
+            </div>
+            <div class="status-indicator mini" data-status="off"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ADDITIONAL COMPONENTS -->
+    <section class="grid grid-3 status-grid mt-lg">
+
+      <!-- Buzzer -->
+      <div class="card status-card" data-component="buzzer">
+        <div class="status-icon">🔊</div>
+        <h3 class="card-title">Buzzer</h3>
+        <div id="buzzer-status" class="status-value">Off</div>
+        <div class="status-indicator" data-status="off"></div>
+      </div>
+
+      <!-- Sensor -->
+      <div class="card status-card" data-component="sensor">
+        <div class="status-icon">📡</div>
+        <h3 class="card-title">Sensor</h3>
+        <div id="sensor-status" class="status-value">Active</div>
+        <div class="status-indicator" data-status="active"></div>
+      </div>
+
+      <!-- System Health -->
+      <div class="card status-card" data-component="system">
+        <div class="status-icon">⚙️</div>
+        <h3 class="card-title">System</h3>
+        <div id="system-status" class="status-value">Running</div>
+        <div class="status-indicator" data-status="active"></div>
+      </div>
+
+    </section>
+
+    <!-- WEIGHT + ACTIVITY -->
+    <section class="grid grid-2 mt-lg">
+
+      <!-- Weight Card -->
+      <div class="card weight-card">
+        <h3 class="card-title">Current Weight</h3>
+
+        <div class="weight-display">
+          <span id="current-weight" class="weight-value">0</span>
+          <span class="weight-unit">g</span>
+        </div>
+
+        <div class="weight-bar">
+          <div id="weight-progress" class="weight-progress"></div>
+        </div>
+
+        <div class="weight-info">
+          <span>Max: 1,000 g</span>
+        </div>
+      </div>
+
+      <!-- Recent Activity -->
+      <div class="card activity-card">
+        <h3 class="card-title">Recent Activity</h3>
+        <ul id="activity-list" class="activity-list">
+          <li class="activity-item">
+            <span class="activity-time">--:--</span>
+            <span class="activity-text">Waiting for data...</span>
+          </li>
+        </ul>
+      </div>
+
+    </section>
+
+    <!-- SYSTEM INFO -->
+    <section class="grid grid-3 mt-lg">
+      <div class="card info-card">
+        <h3 class="card-title">Vehicles Today</h3>
+        <div id="vehicles-today" class="info-value">0</div>
+      </div>
+
+      <div class="card info-card">
+        <h3 class="card-title">Total Weight</h3>
+        <div id="total-weight" class="info-value">0 g</div>
+      </div>
+
+      <div class="card info-card">
+        <h3 class="card-title">System Uptime</h3>
+        <div id="uptime" class="info-value">--:--:--</div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/dashboard.js"></script>
+
+</body>
+</html>

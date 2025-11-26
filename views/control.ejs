@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> - IoT Jembatan Timbang</title>
+  <link rel="stylesheet" href="/css/main.css">
+  <link rel="stylesheet" href="/css/control.css">
+</head>
+<body>
+  <!-- Sidebar Navigation (sama seperti dashboard) -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1 class="sidebar-title">IoT Bridge</h1>
+      <p style="color: var(--text-secondary); font-size: 0.875rem;">Weighing System</p>
+    </div>
+    
+    <nav>
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a href="/" class="nav-link <%= page === 'dashboard' ? 'active' : '' %>">
+            <span class="nav-icon">📊</span>
+            Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a href="/control" class="nav-link <%= page === 'control' ? 'active' : '' %>">
+            <span class="nav-icon">🎛️</span>
+            Control Panel
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content page-content">
+    <header class="page-header">
+      <h2 class="page-title">Control Panel</h2>
+    </header>
+
+    <!-- Gate Control Section -->
+    <div style="margin-bottom: 2rem;">
+      <h3 class="section-title">🚧 Gate Control</h3>
+      <div class="grid grid-2">
+        <!-- Gate Masuk -->
+        <div class="card control-card">
+          <div class="control-header">
+            <div class="control-icon">🚪</div>
+            <h3 class="card-title">Gate Masuk (Entrance)</h3>
+          </div>
+          
+          <div class="control-status">
+            <span class="status-label">Current Status:</span>
+            <span class="status-badge status-inactive" id="gate-in-status-badge">Closed</span>
+          </div>
+
+          <div class="control-buttons">
+            <button class="control-btn btn-open" data-action="gate-in-open">
+              <span class="btn-icon">🔓</span>
+              Open
+            </button>
+            <button class="control-btn btn-close" data-action="gate-in-close">
+              <span class="btn-icon">🔒</span>
+              Close
+            </button>
+          </div>
+        </div>
+
+        <!-- Gate Keluar -->
+        <div class="card control-card">
+          <div class="control-header">
+            <div class="control-icon">🚪</div>
+            <h3 class="card-title">Gate Keluar (Exit)</h3>
+          </div>
+          
+          <div class="control-status">
+            <span class="status-label">Current Status:</span>
+            <span class="status-badge status-inactive" id="gate-out-status-badge">Closed</span>
+          </div>
+
+          <div class="control-buttons">
+            <button class="control-btn btn-open" data-action="gate-out-open">
+              <span class="btn-icon">🔓</span>
+              Open
+            </button>
+            <button class="control-btn btn-close" data-action="gate-out-close">
+              <span class="btn-icon">🔒</span>
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LED Control Section -->
+    <div style="margin-bottom: 2rem;">
+      <h3 class="section-title">💡 LED Control</h3>
+      <div class="grid grid-3">
+        <!-- LED Merah -->
+        <div class="card control-card">
+          <div class="control-header">
+            <div class="control-icon" style="color: #e74c3c;">🔴</div>
+            <h3 class="card-title">LED Merah (Red)</h3>
+          </div>
+          
+          <div class="control-status">
+            <span class="status-label">Current Status:</span>
+            <span class="status-badge status-inactive" id="led-red-status-badge">Off</span>
+          </div>
+
+          <div class="control-buttons">
+            <button class="control-btn btn-on" data-action="led-red-on">
+              <span class="btn-icon">🟢</span>
+              Turn On
+            </button>
+            <button class="control-btn btn-off" data-action="led-red-off">
+              <span class="btn-icon">⚫</span>
+              Turn Off
+            </button>
+          </div>
+        </div>
+
+        <!-- LED Kuning -->
+        <div class="card control-card">
+          <div class="control-header">
+            <div class="control-icon" style="color: #f39c12;">🟡</div>
+            <h3 class="card-title">LED Kuning (Yellow)</h3>
+          </div>
+          
+          <div class="control-status">
+            <span class="status-label">Current Status:</span>
+            <span class="status-badge status-inactive" id="led-yellow-status-badge">Off</span>
+          </div>
+
+          <div class="control-buttons">
+            <button class="control-btn btn-on" data-action="led-yellow-on">
+              <span class="btn-icon">🟢</span>
+              Turn On
+            </button>
+            <button class="control-btn btn-off" data-action="led-yellow-off">
+              <span class="btn-icon">⚫</span>
+              Turn Off
+            </button>
+          </div>
+        </div>
+
+        <!-- LED Hijau -->
+        <div class="card control-card">
+          <div class="control-header">
+            <div class="control-icon" style="color: #2ecc71;">🟢</div>
+            <h3 class="card-title">LED Hijau (Green)</h3>
+          </div>
+          
+          <div class="control-status">
+            <span class="status-label">Current Status:</span>
+            <span class="status-badge status-inactive" id="led-green-status-badge">Off</span>
+          </div>
+
+          <div class="control-buttons">
+            <button class="control-btn btn-on" data-action="led-green-on">
+              <span class="btn-icon">🟢</span>
+              Turn On
+            </button>
+            <button class="control-btn btn-off" data-action="led-green-off">
+              <span class="btn-icon">⚫</span>
+              Turn Off
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Buzzer Control -->
+    <div style="margin-bottom: 2rem;">
+      <h3 class="section-title">🔊 Buzzer Control</h3>
+      <div class="grid grid-1">
+        <div class="card control-card">
+          <div class="control-header">
+            <div class="control-icon">🔊</div>
+            <h3 class="card-title">Buzzer Control</h3>
+          </div>
+          
+          <div class="control-status">
+            <span class="status-label">Current Status:</span>
+            <span class="status-badge status-inactive" id="buzzer-status-badge">Off</span>
+          </div>
+
+          <div class="control-buttons">
+            <button class="control-btn btn-on" data-action="buzzer-on">
+              <span class="btn-icon">🔔</span>
+              Activate
+            </button>
+            <button class="control-btn btn-off" data-action="buzzer-off">
+              <span class="btn-icon">🔕</span>
+              Deactivate
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <h3 class="card-title">Quick Actions</h3>
+      <div class="quick-actions">
+        <button class="btn btn-primary" data-action="reset-all">
+          <span>🔄</span>
+          Reset All
+        </button>
+        <button class="btn btn-success" data-action="system-check">
+          <span>✅</span>
+          System Check
+        </button>
+        <button class="btn btn-success" data-action="start-system">
+          <span>▶️</span>
+          Start
+        </button>
+      </div>
+    </div>
+
+    <!-- Command Log -->
+    <div class="card" style="margin-bottom: 2rem;">
+      <h3 class="card-title">Command History</h3>
+      <div class="command-log" id="command-log">
+        <div class="log-item">
+          <span class="log-time">--:--:--</span>
+          <span class="log-text">Waiting for commands...</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/main.js"></script>
+  <script src="/js/control.js"></script>
+</body>
+</html>

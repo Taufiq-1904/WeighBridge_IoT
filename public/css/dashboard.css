@@ -1,0 +1,380 @@
+/* ===== CSS Variables ===== */
+:root {
+  --accent-primary: #4a69bd;
+  --accent-secondary: #667eea;
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --danger: #e74c3c;
+  --text-primary: #0f1724;
+  --text-secondary: #7f8c8d;
+  --bg-primary: #f1f5f9;
+  --bg-secondary: #eef2ff;
+  --bg-tertiary: #f8fafc;
+  --border-color: rgba(30,40,60,0.06);
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 18px;
+  --transition-fast: 0.18s;
+  --transition-normal: 0.45s;
+  --card-shadow: 0 8px 20px rgba(34,49,63,0.06);
+  --card-border: 1px solid rgba(30,40,60,0.04);
+}
+
+/* ===== Status Group Cards ===== */
+.status-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.group-title {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.status-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.status-mini-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem;
+  background: linear-gradient(180deg, rgba(255,255,255,0.5), rgba(255,255,255,0.3));
+  border-radius: 8px;
+  border: 1px solid rgba(30,40,60,0.04);
+  transition: all var(--transition-fast);
+}
+
+.status-mini-card:hover {
+  background: linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.5));
+  box-shadow: 0 4px 12px rgba(34,49,63,0.06);
+  transform: translateX(4px);
+}
+
+.mini-icon {
+  font-size: 1.5rem;
+  min-width: 1.5rem;
+}
+
+.mini-content {
+  flex: 1;
+}
+
+.mini-title {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-mini-card .status-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0.25rem;
+}
+
+.status-indicator.mini {
+  width: 6px;
+  height: 20px;
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+  margin: 0;
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.status-indicator.mini::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 0%;
+  transition: height var(--transition-normal);
+}
+
+.status-indicator.mini[data-status="active"]::after,
+.status-indicator.mini[data-status="open"]::after,
+.status-indicator.mini[data-status="on"]::after {
+  height: 100%;
+  background: var(--success);
+}
+
+.status-indicator.mini[data-status="closed"]::after,
+.status-indicator.mini[data-status="off"]::after {
+  height: 100%;
+  background: var(--text-secondary);
+}
+
+/* ===== Status Cards ===== */
+.status-card {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-fast);
+}
+
+.status-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--accent-primary);
+  transform: scaleY(0);
+  transition: transform var(--transition-fast);
+}
+
+.status-card:hover::before {
+  transform: scaleY(1);
+}
+
+.status-icon {
+  font-size: 2.5rem;
+  margin-bottom: var(--spacing-sm);
+  opacity: 0.9;
+  transition: transform var(--transition-fast);
+}
+
+.status-card:hover .status-icon {
+  transform: scale(1.1);
+}
+
+.status-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: var(--spacing-sm);
+}
+
+.status-indicator {
+  width: 100%;
+  height: 4px;
+  background: var(--bg-tertiary);
+  border-radius: 2px;
+  margin-top: var(--spacing-md);
+  position: relative;
+  overflow: hidden;
+}
+
+.status-indicator::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 0%;
+  background: var(--success);
+  transition: width var(--transition-normal);
+}
+
+.status-indicator[data-status="active"]::after,
+.status-indicator[data-status="open"]::after,
+.status-indicator[data-status="on"]::after {
+  width: 100%;
+  background: var(--success);
+}
+
+.status-indicator[data-status="closed"]::after,
+.status-indicator[data-status="off"]::after {
+  width: 100%;
+  background: var(--text-secondary);
+}
+
+/* ===== Weight Card ===== */
+.weight-card {
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-tertiary) 100%);
+}
+
+.weight-display {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-sm);
+  margin: var(--spacing-lg) 0;
+}
+
+.weight-value {
+  font-size: 3.5rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  line-height: 1;
+  transition: transform var(--transition-fast);
+}
+
+.weight-value.updating {
+  animation: weightPulse var(--transition-fast);
+}
+
+@keyframes weightPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.weight-unit {
+  font-size: 1.5rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.weight-bar {
+  width: 100%;
+  height: 12px;
+  background: var(--bg-primary);
+  border-radius: 6px;
+  overflow: hidden;
+  margin: var(--spacing-md) 0;
+}
+
+.weight-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--success));
+  border-radius: 6px;
+  transition: width var(--transition-normal);
+  position: relative;
+}
+
+.weight-progress::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.weight-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+/* ===== Activity Card ===== */
+.activity-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.activity-list {
+  list-style: none;
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+}
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-sm) 0;
+  border-bottom: 1px solid var(--border-color);
+  opacity: 0;
+  animation: fadeInUp 0.3s ease-out forwards;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.activity-time {
+  font-weight: 600;
+  color: var(--accent-primary);
+  min-width: 60px;
+  font-size: 0.85rem;
+}
+
+.activity-text {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+/* ===== Info Cards ===== */
+.info-card {
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.info-card:hover {
+  transform: translateY(-4px);
+}
+
+.info-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  margin-top: var(--spacing-sm);
+}
+
+/* ===== Grid Helpers ===== */
+.mt-lg {
+  margin-top: var(--spacing-lg);
+}
+
+.status-grid {
+  margin-bottom: 1.5rem;
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+  .weight-value {
+    font-size: 2.5rem;
+  }
+  
+  .weight-unit {
+    font-size: 1.25rem;
+  }
+
+  .status-group {
+    grid-column: 1 / -1;
+  }
+
+  .status-items {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .status-mini-card {
+    flex: 1;
+    min-width: 150px;
+  }
+}
