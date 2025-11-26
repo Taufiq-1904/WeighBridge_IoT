@@ -1,4 +1,3 @@
-// public/js/control.js - Updated dengan MQTT Integration
 class ControlPanelController {
   constructor() {
     this.commandLog = document.getElementById('command-log');
@@ -11,7 +10,11 @@ class ControlPanelController {
       'buzzer': document.getElementById('buzzer-status-badge')
     };
 
-    // Mapping action ke MQTT command (sesuai dokumentasi)
+    // WebSocket connection
+    this.ws = null;
+    this.wsConnected = false;
+
+    // ...existing code...
     this.ACTION_TO_MQTT = {
       // Gate Controls
       'gate-in-open': 'OPEN1',
@@ -41,10 +44,49 @@ class ControlPanelController {
   }
 
   init() {
+    this.connectWebSocket();
     this.attachEventListeners();
-    this.checkMqttConnection();
-    // Optional: Poll status setiap 5 detik
-    // setInterval(() => this.pollStatus(), 5000);
+  }
+
+  connectWebSocket() {
+    try {
+      // Connect ke WebSocket server di port 3001
+      this.ws = new WebSocket('ws://localhost:3001');
+
+      this.ws.onopen = () => {
+        console.log('🟢 WebSocket connected');
+        this.wsConnected = true;
+        this.logCommand('🟢 WebSocket Connected');
+        Toast.show('Connected to server', 'success', 2000);
+      };
+
+      this.ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log('📨 WebSocket message:', data);
+          // Update UI dengan data terbaru dari server
+        } catch (error) {
+          console.error('Error parsing WebSocket message:', error);
+        }
+      };
+
+      this.ws.onerror = (error) => {
+        console.error('❌ WebSocket error:', error);
+        this.logCommand('❌ WebSocket connection error');
+        Toast.show('Connection error', 'error', 2000);
+      };
+
+      this.ws.onclose = () => {
+        console.log('🔴 WebSocket disconnected');
+        this.wsConnected = false;
+        this.logCommand('🔴 WebSocket Disconnected');
+        // Reconnect setelah 3 detik
+        setTimeout(() => this.connectWebSocket(), 3000);
+      };
+    } catch (error) {
+      console.error('Failed to connect WebSocket:', error);
+      this.logCommand('⚠️ Cannot connect to server');
+    }
   }
 
   attachEventListeners() {
@@ -72,7 +114,7 @@ class ControlPanelController {
     button.disabled = true;
     
     try {
-      // Kirim command ke backend MQTT
+      // Kirim command ke backend via WebSocket
       const result = await this.sendMqttCommand(mqttCommand);
 
       // Remove loading state
@@ -106,24 +148,26 @@ class ControlPanelController {
   }
 
   async sendMqttCommand(command) {
-    try {
-      const response = await fetch('/api/mqtt/command', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ command })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+    return new Promise((resolve, reject) => {
+      // Cek koneksi WebSocket
+      if (!this.wsConnected || this.ws.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket not connected');
+        return resolve({ success: false, error: 'WebSocket not connected' });
       }
 
-      return await response.json();
-    } catch (error) {
-      console.error('Failed to send MQTT command:', error);
-      return { success: false, error: error.message };
-    }
+      try {
+        console.log('📤 Sending command via WebSocket:', command);
+        
+        // Kirim command ke server
+        this.ws.send(command);
+        
+        // Asumsikan berhasil jika tidak ada error
+        resolve({ success: true });
+      } catch (error) {
+        console.error('Failed to send MQTT command:', error);
+        resolve({ success: false, error: error.message });
+      }
+    });
   }
 
   updateStatusFromCommand(command) {
@@ -208,24 +252,6 @@ class ControlPanelController {
       setTimeout(() => {
         badge.style.animation = 'pulse 0.5s ease-out';
       }, 10);
-    }
-  }
-
-  async checkMqttConnection() {
-    try {
-      const response = await fetch('/api/mqtt/status');
-      const data = await response.json();
-      
-      if (data.connected) {
-        this.logCommand('🟢 MQTT Connected to broker: fyuko.app');
-        Toast.show('MQTT Connected', 'success', 2000);
-      } else {
-        this.logCommand('🔴 MQTT Disconnected');
-        Toast.show('MQTT Disconnected', 'error', 3000);
-      }
-    } catch (error) {
-      this.logCommand('⚠️ Cannot reach backend server');
-      Toast.show('Backend connection error', 'error', 3000);
     }
   }
 
