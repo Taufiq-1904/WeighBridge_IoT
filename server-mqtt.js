@@ -18,7 +18,21 @@ mqttClient.on("connect", () => {
 
   mqttClient.subscribe("ayoti/scale/status");
   mqttClient.subscribe("ayoti/scale/Wvehicle");
+
+  // Send test message after connection
+  sendTestMessage();
 });
+
+// Function to send message to MQTT broker
+function sendTestMessage() {
+  const testWeight = Math.floor(Math.random() * 5000) + 1000; // Random weight 1000-6000
+  const testStatus = "Ready";
+
+  console.log("📤 Sending test messages to MQTT...");
+  mqttClient.publish("ayoti/scale/Wvehicle", testWeight.toString());
+  mqttClient.publish("ayoti/scale/status", testStatus);
+  console.log(`✅ Sent - Weight: ${testWeight}, Status: ${testStatus}`);
+}
 
 let latestState = {
   status: null,
@@ -39,12 +53,19 @@ wss.on("connection", ws => {
 
   ws.on("message", msg => {
     const cmd = msg.toString();
+    console.log("📥 Received command from frontend:", cmd);
     mqttClient.publish("ayoti/scale/cmd", cmd);
+
+    // Echo back for testing
+    if (cmd === "test") {
+      sendTestMessage();
+    }
   });
 });
 
 mqttClient.on("message", (topic, msg) => {
   const text = msg.toString().trim();
+  console.log(`📨 Received MQTT message - Topic: ${topic}, Message: ${text}`);
 
   if (topic === "ayoti/scale/Wvehicle") {
     latestState.weight = parseFloat(text);
@@ -62,3 +83,11 @@ mqttClient.on("message", (topic, msg) => {
     }
   });
 });
+
+// ===============================
+// MANUAL TEST FUNCTION (Optional)
+// ===============================
+// Uncomment to send test messages every 5 seconds
+// setInterval(() => {
+//   sendTestMessage();
+// }, 5000);
