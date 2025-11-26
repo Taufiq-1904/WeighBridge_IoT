@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title><%= title %></title>
+
+  <!-- Load CSS Global -->
+  <link rel="stylesheet" href="/css/main.css" />
+  <!-- Load CSS Khusus Halaman Ini -->
+  <link rel="stylesheet" href="/css/history.css" />
+  
+  <!-- Chart.js dari CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="page-wrapper">
+    <!-- Navbar/Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <h1>⚖️ WeighBridge IoT</h1>
+        </div>
+        <nav class="navbar">
+          <a href="/" class="nav-link">Dashboard</a>
+          <a href="/history" class="nav-link active">History</a>
+          <a href="/control" class="nav-link">Control</a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="history-container">
+        <!-- Header Section -->
+        <section class="history-header">
+          <h2>📊 Riwayat Timbangan</h2>
+          <div class="header-actions">
+            <button id="exportBtn" class="btn btn-secondary">📥 Export CSV</button>
+            <button id="refreshBtn" class="btn btn-primary">🔄 Refresh</button>
+          </div>
+        </section>
+
+        <!-- Filter Section -->
+        <section class="filter-section">
+          <div class="filter-group">
+            <label for="filterDate">Filter Tanggal:</label>
+            <input type="date" id="filterDate" class="input-field" />
+          </div>
+          <div class="filter-group">
+            <label for="filterWeight">Filter Berat (g):</label>
+            <input type="number" id="filterWeight" class="input-field" placeholder="Min berat" />
+          </div>
+          <button id="clearFilterBtn" class="btn btn-outline">❌ Clear Filter</button>
+        </section>
+
+        <!-- Chart Card -->
+        <section class="chart-card">
+          <h3>Grafik Berat Timbangan (7 Hari Terakhir)</h3>
+          <canvas id="historyChart"></canvas>
+        </section>
+
+        <!-- Table Section -->
+        <section class="table-section">
+          <h3>Data Tabel Lengkap</h3>
+          <div class="table-wrapper">
+            <% if (rows && rows.length > 0) { %>
+              <table class="history-table">
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>ID Kendaraan</th>
+                    <th>Berat (g)</th>
+                    <th>Waktu</th>
+                    <th>Aksi</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% rows.forEach((item, index) => { %>
+                    <tr>
+                      <td><%= index + 1 %></td>
+                      <td><strong><%= item.id || '-' %></strong></td>
+                      <td><%= item.weight || '-' %></td>
+                      <td><%= new Date(item.created_at).toLocaleString('id-ID') %></td>
+                      <td>
+                        <button class="btn-small btn-delete" data-id="<%= item.id != null ? item.id : '' %>" onclick="deleteRecord(this.dataset.id)">🗑️ Hapus</button>
+                      </td>
+                    </tr>
+                  <% }); %>
+                </tbody>
+              </table>
+            <% } else { %>
+              <div class="empty-state">
+                <p>📭 Tidak ada data riwayat timbangan</p>
+              </div>
+            <% } %>
+          </div>
+        </section>
+
+        <!-- Pagination -->
+        <section class="pagination">
+          <button class="btn btn-outline" onclick="previousPage()">← Sebelumnya</button>
+          <span id="pageInfo">Halaman 1</span>
+          <button class="btn btn-outline" onclick="nextPage()">Selanjutnya →</button>
+        </section>
+      </div>
+    </main>
+  <!-- Script -->
+  <script src="/js/history.js"></script>
+  <script>
+    // Data dari backend
+        const historyData = JSON.parse('<%- JSON.stringify(rows || []) %>');
+        
+        // XSS Prevention - Escape HTML
+    function escapeHtml(text) {
+      const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+      };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
+
+    // Event Listeners
+    document.getElementById('filterDate')?.addEventListener('change', filterHistory);
+    document.getElementById('filterWeight')?.addEventListener('input', filterHistory);
+    document.getElementById('clearFilterBtn')?.addEventListener('click', clearFilters);
+    document.getElementById('exportBtn')?.addEventListener('click', exportToCSV);
+    document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
+
+    // Filter History
+    function filterHistory() {
+      console.log('Filter applied');
+      // Implementasi filter logic di history.js
+    }
+
+    // Clear Filters
+    function clearFilters() {
+      document.getElementById('filterDate').value = '';
+      document.getElementById('filterWeight').value = '';
+      location.reload();
+    }
+
+    // Delete Record
+    function deleteRecord(id) {
+      if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) {
+        return;
+      }
+      
+      fetch(`/api/history/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Data berhasil dihapus');
+          location.reload();
+        } else {
+          alert('Gagal menghapus data: ' + (data.message || 'Unknown error'));
+        }
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        alert('Terjadi kesalahan saat menghapus data');
+      });
+    }
+
+    // Export to CSV
+    function exportToCSV() {
+      const table = document.querySelector('.history-table');
+      
+      if (!table) {
+        alert('Tidak ada data untuk diexport');
+        return;
+      }
+
+      const rows = [];
+      
+      // Get headers
+      const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
+      rows.push(headers.join(','));
+
+      // Get data rows (skip aksi column)
+      table.querySelectorAll('tbody tr').forEach(tr => {
+        const cells = Array.from(tr.querySelectorAll('td')).slice(0, -1).map(td => {
+          return `"${td.textContent.trim().replace(/"/g, '""')}"`;
+        });
+        rows.push(cells.join(','));
+      });
+
+      // Create CSV blob
+      const csvContent = rows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `history_${new Date().getTime()}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
+
+    // Pagination
+    function previousPage() {
+      console.log('Previous page');
+    }
+
+    function nextPage() {
+      console.log('Next page');
+    }
+
+    // Initialize Chart (Optional)
+    function initChart() {
+      const ctx = document.getElementById('historyChart');
+      if (!ctx) return;
+
+      const data = {
+        labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+        datasets: [{
+          label: 'Berat Timbangan (g)',
+          data: [100, 150, 130, 180, 200, 160, 190],
+          borderColor: '#4a69bd',
+          backgroundColor: 'rgba(74, 105, 189, 0.1)',
+          tension: 0.4,
+          fill: true,
+          pointRadius: 5,
+          pointBackgroundColor: '#4a69bd',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      };
+
+      const options = {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: {
+              display: true,
+              text: 'Berat (g)'
+            }
+          }
+        }
+      };
+
+      new Chart(ctx, {
+        type: 'line',
+        data: data,
+        options: options
+      });
+    }
+
+    // Initialize when DOM ready
+    document.addEventListener('DOMContentLoaded', initChart);
+  </script>
+</body>
+</html>
