@@ -107,128 +107,41 @@
     </main>
   <!-- Script -->
   <script src="/js/history.js"></script>
-  <script>
-    // Data dari backend
-        const historyData = JSON.parse('<%- JSON.stringify(rows || []) %>');
-        
-        // XSS Prevention - Escape HTML
-    function escapeHtml(text) {
-      const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#039;'
-      };
-      return String(text).replace(/[&<>"']/g, m => map[m]);
-    }
+<script>
+  // Ambil data dari backend
+  let historyData = JSON.parse('<%- JSON.stringify(rows || []) %>');
 
-    // Event Listeners
-    document.getElementById('filterDate')?.addEventListener('change', filterHistory);
-    document.getElementById('filterWeight')?.addEventListener('input', filterHistory);
-    document.getElementById('clearFilterBtn')?.addEventListener('click', clearFilters);
-    document.getElementById('exportBtn')?.addEventListener('click', exportToCSV);
-    document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
+  // XSS Prevention - Escape HTML
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+  }
 
-    // Filter History
-    function filterHistory() {
-      console.log('Filter applied');
-      // Implementasi filter logic di history.js
-    }
+  // Chart.js instance
+  let historyChart = null;
 
-    // Clear Filters
-    function clearFilters() {
-      document.getElementById('filterDate').value = '';
-      document.getElementById('filterWeight').value = '';
-      location.reload();
-    }
+  function initChart(data = historyData) {
+    const ctx = document.getElementById('historyChart');
+    if (!ctx) return;
 
-    // Delete Record
-    function deleteRecord(id) {
-      if (!confirm('Apakah Anda yakin ingin menghapus data ini?')) {
-        return;
-      }
-      
-      fetch(`/api/history/${encodeURIComponent(id)}`, {
-        method: 'DELETE',
-        headers: {
-          'X-Requested-With': 'XMLHttpRequest',
-          'Content-Type': 'application/json'
-        }
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.success) {
-          alert('Data berhasil dihapus');
-          location.reload();
-        } else {
-          alert('Gagal menghapus data: ' + (data.message || 'Unknown error'));
-        }
-      })
-      .catch(err => {
-        console.error('Error:', err);
-        alert('Terjadi kesalahan saat menghapus data');
-      });
-    }
+    const labels = data.map(item =>
+      new Date(item.created_at).toLocaleString('id-ID', { hour: '2-digit', minute: '2-digit' })
+    );
+    const chartValues = data.map(item => item.weight);
 
-    // Export to CSV
-    function exportToCSV() {
-      const table = document.querySelector('.history-table');
-      
-      if (!table) {
-        alert('Tidak ada data untuk diexport');
-        return;
-      }
-
-      const rows = [];
-      
-      // Get headers
-      const headers = Array.from(table.querySelectorAll('th')).map(th => th.textContent.trim());
-      rows.push(headers.join(','));
-
-      // Get data rows (skip aksi column)
-      table.querySelectorAll('tbody tr').forEach(tr => {
-        const cells = Array.from(tr.querySelectorAll('td')).slice(0, -1).map(td => {
-          return `"${td.textContent.trim().replace(/"/g, '""')}"`;
-        });
-        rows.push(cells.join(','));
-      });
-
-      // Create CSV blob
-      const csvContent = rows.join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `history_${new Date().getTime()}.csv`);
-      link.style.visibility = 'hidden';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    }
-
-    // Pagination
-    function previousPage() {
-      console.log('Previous page');
-    }
-
-    function nextPage() {
-      console.log('Next page');
-    }
-
-    // Initialize Chart (Optional)
-    function initChart() {
-      const ctx = document.getElementById('historyChart');
-      if (!ctx) return;
-
-      const data = {
-        labels: ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'],
+    const chartConfig = {
+      type: 'line',
+      data: {
+        labels: labels,
         datasets: [{
-          label: 'Berat Timbangan (g)',
-          data: [100, 150, 130, 180, 200, 160, 190],
+          label: 'Berat Timbangan (Kg)',
+          data: chartValues,
           borderColor: '#4a69bd',
           backgroundColor: 'rgba(74, 105, 189, 0.1)',
           tension: 0.4,
@@ -238,37 +151,126 @@
           pointBorderColor: '#fff',
           pointBorderWidth: 2
         }]
-      };
-
-      const options = {
+      },
+      options: {
         responsive: true,
         maintainAspectRatio: true,
-        plugins: {
-          legend: {
-            display: true,
-            position: 'top'
-          }
-        },
+        plugins: { legend: { display: true, position: 'top' } },
         scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Berat (g)'
-            }
-          }
+          y: { beginAtZero: true, title: { display: true, text: 'Berat (Kg)' } }
         }
-      };
+      }
+    };
 
-      new Chart(ctx, {
-        type: 'line',
-        data: data,
-        options: options
-      });
+    if (historyChart) {
+      historyChart.destroy(); // hapus chart lama sebelum update
     }
 
-    // Initialize when DOM ready
-    document.addEventListener('DOMContentLoaded', initChart);
-  </script>
+    historyChart = new Chart(ctx, chartConfig);
+  }
+
+  // FILTER
+  function applyFilters() {
+    const dateFilter = document.getElementById('filterDate').value;
+    const weightFilter = parseFloat(document.getElementById('filterWeight').value);
+
+    const filtered = historyData.filter(item => {
+      let valid = true;
+      if (dateFilter) {
+        const itemDate = new Date(item.created_at).toISOString().slice(0, 10);
+        valid = valid && itemDate === dateFilter;
+      }
+      if (!isNaN(weightFilter)) {
+        valid = valid && item.weight >= weightFilter;
+      }
+      return valid;
+    });
+
+    renderTable(filtered);
+    initChart(filtered);
+  }
+
+  function clearFilters() {
+    document.getElementById('filterDate').value = '';
+    document.getElementById('filterWeight').value = '';
+    renderTable(historyData);
+    initChart(historyData);
+  }
+
+  // TABEL
+  function renderTable(data) {
+    const tbody = document.querySelector('.history-table tbody');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    data.forEach((item, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${escapeHtml(item.id || '-')}</td>
+        <td>${escapeHtml(item.weight || '-')}</td>
+        <td>${new Date(item.created_at).toLocaleString('id-ID')}</td>
+        <td><button class="btn-small btn-delete" onclick="deleteRecord('${item.id}')">🗑️ Hapus</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center">📭 Tidak ada data</td></tr>`;
+    }
+  }
+
+  // DELETE RECORD
+  function deleteRecord(id) {
+    if (!confirm('Apakah yakin ingin menghapus data ini?')) return;
+
+    fetch(`/api/history/${encodeURIComponent(id)}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    }).then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('Data berhasil dihapus');
+          historyData = historyData.filter(item => item.id != id);
+          renderTable(historyData);
+          initChart(historyData);
+        } else {
+          alert('Gagal menghapus data: ' + (data.message || 'Unknown error'));
+        }
+      }).catch(err => {
+        console.error(err);
+        alert('Terjadi kesalahan');
+      });
+  }
+
+  // EXPORT CSV
+  function exportToCSV() {
+    const rows = [['No','ID Kendaraan','Berat (g)','Waktu']];
+    historyData.forEach((item, index) => {
+      rows.push([index+1, item.id, item.weight, new Date(item.created_at).toLocaleString('id-ID')]);
+    });
+    const csvContent = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `history_${new Date().getTime()}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
+  // EVENT LISTENER
+  document.getElementById('filterDate')?.addEventListener('change', applyFilters);
+  document.getElementById('filterWeight')?.addEventListener('input', applyFilters);
+  document.getElementById('clearFilterBtn')?.addEventListener('click', clearFilters);
+  document.getElementById('exportBtn')?.addEventListener('click', exportToCSV);
+  document.getElementById('refreshBtn')?.addEventListener('click', () => location.reload());
+
+  // INIT
+  document.addEventListener('DOMContentLoaded', () => {
+    renderTable(historyData);
+    initChart(historyData);
+  });
+</script>
+
 </body>
 </html>
